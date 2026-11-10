@@ -6,3 +6,4 @@ __pycache__/
 parts/
 stage/
 prime/
+creds.txt
