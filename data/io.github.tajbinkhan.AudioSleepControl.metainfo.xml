@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.tajbinkhan.AudioSleepControl</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+  <name>Audio Sleep Control</name>
+  <summary>Keep your speaker output from going to sleep</summary>
+  <developer id="io.github.tajbinkhan">
+    <name>Tajbin Khan</name>
+  </developer>
+  <description>
+    <p>
+      Linux puts sound outputs to sleep when nothing is playing. With some
+      speakers that causes pops, cut-off sound at the start of playback, or
+      speakers dropping into their own standby.
+    </p>
+    <p>Audio Sleep Control shows the state of your output and gives you two switches:</p>
+    <ul>
+      <li>Keep the speaker output awake (a WirePlumber rule for your user)</li>
+      <li>Turn off the HDA sound chip's power saving (asks for your password)</li>
+    </ul>
+  </description>
+  <launchable type="desktop-id">io.github.tajbinkhan.AudioSleepControl.desktop</launchable>
+  <url type="homepage">https://github.com/tajbinkhan/audio-sleep-control</url>
+  <url type="bugtracker">https://github.com/tajbinkhan/audio-sleep-control/issues</url>
+  <categories>
+    <category>AudioVideo</category>
+    <category>Audio</category>
+  </categories>
+  <requires>
+    <display_length compare="ge">360</display_length>
+  </requires>
+  <content_rating type="oars-1.1"/>
+  <releases>
+    <release version="1.0.0" date="2026-11-10">
+      <description><p>First release.</p></description>
+    </release>
+  </releases>
+</component>

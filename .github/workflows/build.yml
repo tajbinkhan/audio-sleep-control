@@ -1,0 +1,128 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Lint and validate
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends desktop-file-utils appstream python3-yaml
+
+      - name: Check Python syntax
+        run: python3 -m py_compile src/audio_sleep_control.py
+
+      - name: Validate desktop entry and AppStream metadata
+        run: |
+          desktop-file-validate data/io.github.tajbinkhan.AudioSleepControl.desktop
+          appstreamcli validate --no-net data/io.github.tajbinkhan.AudioSleepControl.metainfo.xml
+
+      - name: Check snapcraft.yaml parses
+        run: python3 -c "import yaml; yaml.safe_load(open('snap/snapcraft.yaml'))"
+
+      - name: Check tag matches app version
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          SRC=$(sed -n 's/^__version__ = "\(.*\)"/\1/p' src/audio_sleep_control.py)
+          [ "$TAG" = "$SRC" ] || { echo "::error::Tag v$TAG but __version__ is $SRC"; exit 1; }
+          grep -q "<release version=\"$TAG\"" data/io.github.tajbinkhan.AudioSleepControl.metainfo.xml \
+            || { echo "::error::No <release version=\"$TAG\"> in metainfo.xml"; exit 1; }
+
+  deb:
+    name: Build .deb
+    needs: check
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build package
+        run: |
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            packaging/deb/build-deb.sh "${GITHUB_REF_NAME}"
+          else
+            packaging/deb/build-deb.sh
+          fi
+
+      - name: Lint package
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends lintian
+          lintian --info --no-tag-display-limit dist/*.deb || true
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deb
+          path: dist/*.deb
+          if-no-files-found: error
+
+  snap:
+    name: Build snap
+    needs: check
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: snapcore/action-build@v1
+        id: build
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: snap
+          path: ${{ steps.build.outputs.snap }}
+          if-no-files-found: error
+
+  release:
+    name: GitHub release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [deb, snap]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/*
+          generate_release_notes: true
+
+  publish-snap:
+    name: Publish to Snap Store
+    # Turn on with: gh variable set SNAP_PUBLISH --body true
+    # and add the SNAPCRAFT_STORE_CREDENTIALS secret (see README).
+    if: startsWith(github.ref, 'refs/tags/v') && vars.SNAP_PUBLISH == 'true'
+    needs: snap
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: snap
+          path: artifacts
+
+      - name: Find snap file
+        id: find
+        run: echo "snap=$(ls artifacts/*.snap)" >> "$GITHUB_OUTPUT"
+
+      - uses: snapcore/action-publish@v1
+        env:
+          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
+        with:
+          snap: ${{ steps.find.outputs.snap }}
+          release: ${{ vars.SNAP_CHANNEL || 'stable' }}

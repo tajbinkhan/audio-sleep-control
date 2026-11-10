@@ -1,0 +1,21 @@
+#!/bin/sh
+# Classic snap launcher: run the app with the host's Python, GTK 4 and
+# libadwaita, so it uses the host's graphics drivers and sound tools.
+APP="$SNAP/bin/audio-sleep-control"
+CHECK='import gi; gi.require_version("Gtk","4.0"); gi.require_version("Adw","1"); from gi.repository import Gtk, Adw; assert Adw.MINOR_VERSION >= 5'
+
+if ! /usr/bin/python3 -c "$CHECK" 2>/dev/null; then
+  MSG="Audio Sleep Control needs GTK 4 and libadwaita 1.5 or newer.
+
+Install them with:
+sudo apt install python3-gi gir1.2-gtk-4.0 gir1.2-adw-1"
+  if command -v zenity >/dev/null; then
+    zenity --error --title="Audio Sleep Control" --text="$MSG" 2>/dev/null
+  elif command -v notify-send >/dev/null; then
+    notify-send "Audio Sleep Control" "$MSG"
+  fi
+  echo "$MSG" >&2
+  exit 1
+fi
+
+exec /usr/bin/python3 "$APP" "$@"

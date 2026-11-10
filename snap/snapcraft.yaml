@@ -1,0 +1,46 @@
+name: audio-sleep-control
+title: Audio Sleep Control
+base: core24
+adopt-info: app            # version, summary, description come from the AppStream file
+grade: stable
+# The app writes a WirePlumber rule in ~/.config, restarts the user's
+# WirePlumber service and (via pkexec) changes snd_hda_intel power saving.
+# None of that is possible under strict confinement, so this is a classic
+# snap and needs a manual classic-confinement review in the Snap Store.
+confinement: classic
+license: MIT
+contact: https://github.com/tajbinkhan/audio-sleep-control/issues
+issues: https://github.com/tajbinkhan/audio-sleep-control/issues
+source-code: https://github.com/tajbinkhan/audio-sleep-control
+website: https://github.com/tajbinkhan/audio-sleep-control
+
+# Pure Python script using the host's GTK, so one snap fits every architecture.
+platforms:
+  all:
+    build-on: [amd64]
+    build-for: [all]
+
+apps:
+  audio-sleep-control:
+    command: bin/launcher
+    desktop: usr/share/applications/io.github.tajbinkhan.AudioSleepControl.desktop
+    common-id: io.github.tajbinkhan.AudioSleepControl
+
+parts:
+  app:
+    plugin: dump
+    source: .
+    parse-info:
+      - usr/share/metainfo/io.github.tajbinkhan.AudioSleepControl.metainfo.xml
+    override-build: |
+      ID=io.github.tajbinkhan.AudioSleepControl
+      D=$CRAFT_PART_INSTALL
+      install -Dm755 src/audio_sleep_control.py "$D/bin/audio-sleep-control"
+      install -Dm755 snap/local/launcher "$D/bin/launcher"
+      install -Dm644 data/$ID.metainfo.xml "$D/usr/share/metainfo/$ID.metainfo.xml"
+      install -Dm644 data/icons/hicolor/scalable/apps/$ID.svg "$D/usr/share/icons/hicolor/scalable/apps/$ID.svg"
+      install -Dm644 data/$ID.desktop "$D/usr/share/applications/$ID.desktop"
+      sed -i "s|^Icon=.*|Icon=\${SNAP}/usr/share/icons/hicolor/scalable/apps/$ID.svg|" "$D/usr/share/applications/$ID.desktop"
+    prime:
+      - bin
+      - usr

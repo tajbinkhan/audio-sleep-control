@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Audio Sleep Control
+Comment=Keep your speaker output from going to sleep
+Exec=audio-sleep-control
+Icon=io.github.tajbinkhan.AudioSleepControl
+Categories=AudioVideo;Audio;
+Keywords=sound;speaker;sleep;suspend;power;pipewire;
+StartupNotify=true
