@@ -28,8 +28,11 @@ sudo apt install ./audio-sleep-control_*_all.deb
 ### Snap
 
 ```bash
-sudo snap install audio-sleep-control --classic
+sudo snap install --classic --dangerous ./audio-sleep-control_*_all.snap
 ```
+
+Download the `.snap` from the [latest release](https://github.com/tajbinkhan/audio-sleep-control/releases/latest).
+It isn't in the Snap Store, so `--dangerous` is needed to install a local file.
 
 The snap uses classic confinement because the app changes WirePlumber and
 kernel settings, which the snap sandbox doesn't allow.
@@ -61,32 +64,8 @@ attached to each run as artifacts.
    git tag vX.Y.Z
    git push origin main vX.Y.Z
    ```
-3. Actions builds the `.deb` and `.snap`, creates a GitHub release with both
-   attached, and (once set up, see below) uploads the snap to the Snap Store.
-
-## Publishing to the Snap Store (one-time setup)
-
-1. Create an account at <https://snapcraft.io> and register the name:
-   ```bash
-   sudo snap install snapcraft --classic
-   snapcraft login
-   snapcraft register audio-sleep-control
-   ```
-2. Ask for classic confinement: post in the
-   [store-requests forum](https://forum.snapcraft.io/c/store-requests/19)
-   explaining why the app needs it (it writes a WirePlumber config in
-   `~/.config`, restarts the user's WirePlumber service, and changes
-   `snd_hda_intel` power saving through pkexec). The first upload stays in
-   manual review until this is approved.
-3. Give GitHub Actions upload rights:
-   ```bash
-   snapcraft export-login --snaps=audio-sleep-control \
-     --acls package_access,package_push,package_update,package_release - \
-     | gh secret set SNAPCRAFT_STORE_CREDENTIALS
-   gh variable set SNAP_PUBLISH --body true
-   ```
-   Optional: `gh variable set SNAP_CHANNEL --body edge` to release to `edge`
-   instead of `stable`.
+3. Actions builds the `.deb` and `.snap` and creates a GitHub release with both
+   attached.
 
 ## License
 

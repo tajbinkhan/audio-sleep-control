@@ -102,27 +102,3 @@ jobs:
         with:
           files: artifacts/*
           generate_release_notes: true
-
-  publish-snap:
-    name: Publish to Snap Store
-    # Turn on with: gh variable set SNAP_PUBLISH --body true
-    # and add the SNAPCRAFT_STORE_CREDENTIALS secret (see README).
-    if: startsWith(github.ref, 'refs/tags/v') && vars.SNAP_PUBLISH == 'true'
-    needs: snap
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: snap
-          path: artifacts
-
-      - name: Find snap file
-        id: find
-        run: echo "snap=$(ls artifacts/*.snap)" >> "$GITHUB_OUTPUT"
-
-      - uses: snapcore/action-publish@v1
-        env:
-          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
-        with:
-          snap: ${{ steps.find.outputs.snap }}
-          release: ${{ vars.SNAP_CHANNEL || 'stable' }}
